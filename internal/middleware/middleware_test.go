@@ -3,7 +3,6 @@ package middleware_test
 import (
 	"go-telegram-bot-app/v1/internal/middleware"
 	"go-telegram-bot-app/v1/internal/server"
-	"log"
 	"testing"
 
 	"github.com/google/uuid"
@@ -15,7 +14,7 @@ const (
 )
 
 func middlewareFunc1(ctx *server.Context, next middleware.HandlerFunc) {
-
+	ctx.Logger().Println("Middleware 1 start")
 	v, _ := ctx.GetData(dataKey)
 
 	a, ok := v.(string)
@@ -35,12 +34,12 @@ func middlewareFunc1(ctx *server.Context, next middleware.HandlerFunc) {
 		ctx.SetData(dataKey, b)
 	}
 
-	ctx.Logger.Println("Middleware 1 end")
+	ctx.Logger().Println("Middleware 1 end")
 
 }
 
 func middlewareFunc2(ctx *server.Context, next middleware.HandlerFunc) {
-	ctx.Logger.Println("Middleware 2 start")
+	ctx.Logger().Println("Middleware 2 start")
 	v, ok := ctx.GetData(dataKey)
 	if ok {
 		c := v.(string)
@@ -55,7 +54,7 @@ func middlewareFunc2(ctx *server.Context, next middleware.HandlerFunc) {
 		d += "D"
 		ctx.SetData(dataKey, d)
 	}
-	ctx.Logger.Println("Middleware 2 end")
+	ctx.Logger().Println("Middleware 2 end")
 
 }
 
@@ -66,7 +65,7 @@ func handlerFunc(ctx *server.Context) {
 		e += "E"
 		ctx.SetData(dataKey, e)
 	}
-	ctx.Logger.Println("Handler Function called.")
+	ctx.Logger().Println("Handler Function called.")
 }
 
 func TestMiddlewareChainCorrectOrder(t *testing.T) {
@@ -76,7 +75,6 @@ func TestMiddlewareChainCorrectOrder(t *testing.T) {
 	chain := middleware.New()
 	ctx := server.NewContext()
 
-	ctx.Logger = log.Default()
 	chain.Append(middlewareFunc1, middlewareFunc2)
 	m := chain.Wrap(handlerFunc)
 

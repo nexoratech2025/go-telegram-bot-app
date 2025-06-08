@@ -33,3 +33,7 @@ func (c *Context) Logger() *log.Logger {
 
 	return c.logger
 }
+
+func (c *Context) SetLogger(logger *log.Logger) {
+	c.logger = logger
+}

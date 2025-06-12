@@ -1,18 +1,12 @@
-package middleware
+package tgbotapp
 
-import (
-	"go-telegram-bot-app/v1/internal/server"
-)
-
-type HandlerFunc func(context *server.Context)
-
-type Middleware func(context *server.Context, next HandlerFunc)
+type Middleware func(context *BotContext, next HandlerFunc)
 
 type MiddlewareChain struct {
 	middlewares []Middleware
 }
 
-func New() *MiddlewareChain {
+func NewMiddlewareChain() *MiddlewareChain {
 	return &MiddlewareChain{
 		middlewares: make([]Middleware, 0),
 	}
@@ -25,13 +19,13 @@ func (c *MiddlewareChain) Append(middleware ...Middleware) {
 
 func (c *MiddlewareChain) Wrap(final HandlerFunc) HandlerFunc {
 
-	return func(ctx *server.Context) {
+	return func(ctx *BotContext) {
 
-		var exec func(int, *server.Context)
+		var exec func(int, *BotContext)
 
-		exec = func(index int, ctx *server.Context) {
+		exec = func(index int, ctx *BotContext) {
 			if index < len(c.middlewares) {
-				c.middlewares[index](ctx, func(ctx1 *server.Context) {
+				c.middlewares[index](ctx, func(ctx1 *BotContext) {
 					exec(index+1, ctx1)
 				})
 			} else {

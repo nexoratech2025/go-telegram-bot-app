@@ -1,8 +1,7 @@
-package middleware_test
+package tgbotapp_test
 
 import (
-	"go-telegram-bot-app/v1/internal/middleware"
-	"go-telegram-bot-app/v1/internal/server"
+	tgbotapp "go-telegram-bot-app/v1"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,8 +12,8 @@ const (
 	expectedValue = "ACEDB"
 )
 
-func middlewareFunc1(ctx *server.Context, next middleware.HandlerFunc) {
-	ctx.Logger().Println("Middleware 1 start")
+func middlewareFunc1(ctx *tgbotapp.BotContext, next tgbotapp.HandlerFunc) {
+	ctx.Logger().Debug("Middleware 1 start")
 	v, _ := ctx.GetData(dataKey)
 
 	a, ok := v.(string)
@@ -34,12 +33,12 @@ func middlewareFunc1(ctx *server.Context, next middleware.HandlerFunc) {
 		ctx.SetData(dataKey, b)
 	}
 
-	ctx.Logger().Println("Middleware 1 end")
+	ctx.Logger().Debug("Middleware 1 end")
 
 }
 
-func middlewareFunc2(ctx *server.Context, next middleware.HandlerFunc) {
-	ctx.Logger().Println("Middleware 2 start")
+func middlewareFunc2(ctx *tgbotapp.BotContext, next tgbotapp.HandlerFunc) {
+	ctx.Logger().Debug("Middleware 2 start")
 	v, ok := ctx.GetData(dataKey)
 	if ok {
 		c := v.(string)
@@ -54,26 +53,26 @@ func middlewareFunc2(ctx *server.Context, next middleware.HandlerFunc) {
 		d += "D"
 		ctx.SetData(dataKey, d)
 	}
-	ctx.Logger().Println("Middleware 2 end")
+	ctx.Logger().Debug("Middleware 2 end")
 
 }
 
-func handlerFunc(ctx *server.Context) {
+func handlerFunc(ctx *tgbotapp.BotContext) {
 	v, ok := ctx.GetData(dataKey)
 	if ok {
 		e := v.(string)
 		e += "E"
 		ctx.SetData(dataKey, e)
 	}
-	ctx.Logger().Println("Handler Function called.")
+	ctx.Logger().Debug("Handler Function called.")
 }
 
 func TestMiddlewareChainCorrectOrder(t *testing.T) {
 
 	t.Logf("Running Test %s", uuid.NewString())
 
-	chain := middleware.New()
-	ctx := server.NewContext()
+	chain := tgbotapp.NewMiddlewareChain()
+	ctx := tgbotapp.NewBotContext(t.Context(), nil, nil)
 
 	chain.Append(middlewareFunc1, middlewareFunc2)
 	m := chain.Wrap(handlerFunc)

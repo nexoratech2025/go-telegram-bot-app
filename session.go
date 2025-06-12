@@ -2,6 +2,10 @@ package tgbotapp
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+const (
+	StateDefault StateName = ""
+)
+
 type Session struct {
 	ChatID int64
 	State  StateName

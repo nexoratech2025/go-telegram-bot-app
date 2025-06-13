@@ -49,7 +49,7 @@ func (c *BotContext) GetData(key string) (value any, ok bool) {
 }
 
 func (c *BotContext) Logger() *slog.Logger {
-	return c.app.slog
+	return c.app.Logger
 }
 
 func (c *BotContext) SetHandler(f HandlerFunc) {

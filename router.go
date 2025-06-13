@@ -15,81 +15,18 @@ const (
 	ErrEmptyArgument = "Argument %s must not be empty."
 )
 
-type RouteTable struct {
-	commandRegistry      map[CommandName]HandlerFunc
-	callbackRegistry     map[CallbackName]HandlerFunc
-	messageStateRegistry map[StateName]HandlerFunc
+type Router interface {
+	GetCommandHandler(name CommandName) (HandlerFunc, bool)
+	AddCommandHandler(name CommandName, handler HandlerFunc) error
+
+	GetCallbackHandler(name CallbackName) (HandlerFunc, bool)
+	AddCallbackHandler(name CallbackName, handler HandlerFunc) error
+
+	GetMessageStateHandler(name StateName) (HandlerFunc, bool)
+	AddMessageHandler(name StateName, handler HandlerFunc) error
 }
 
-func NewRouteTable() *RouteTable {
-	return &RouteTable{
-		commandRegistry:      make(map[CommandName]HandlerFunc),
-		callbackRegistry:     make(map[CallbackName]HandlerFunc),
-		messageStateRegistry: make(map[StateName]HandlerFunc),
-	}
-}
-
-func (r *RouteTable) GetCommandHandler(name CommandName) (f HandlerFunc, ok bool) {
-
-	f, ok = r.commandRegistry[name]
-	return
-
-}
-
-func (r *RouteTable) GetCallbackHandler(name CallbackName) (f HandlerFunc, ok bool) {
-
-	f, ok = r.callbackRegistry[name]
-	return
-
-}
-
-func (r *RouteTable) GetMessageStateHandler(name StateName) (f HandlerFunc, ok bool) {
-
-	f, ok = r.messageStateRegistry[name]
-	return
-
-}
-
-func (r *RouteTable) AddCallbackHandler(name CallbackName, handler HandlerFunc) {
-
-	if len(name) < 1 {
-		panic(fmt.Errorf(ErrEmptyArgument, "name"))
-	}
-
-	if _, ok := r.callbackRegistry[name]; ok {
-		panic(NewErrCallbackExists(name))
-	}
-
-	r.callbackRegistry[name] = handler
-
-}
-
-func (r *RouteTable) AddCommandHandler(name CommandName, handler HandlerFunc) {
-	if len(name) < 1 {
-		panic(fmt.Errorf(ErrEmptyArgument, "name"))
-	}
-
-	if _, ok := r.commandRegistry[name]; ok {
-		panic(NewErrCommandExists(name))
-	}
-
-	r.commandRegistry[name] = handler
-
-}
-
-func (r *RouteTable) AddMessageHandler(name StateName, handler HandlerFunc) {
-	if len(name) < 1 {
-		panic(fmt.Errorf(ErrEmptyArgument, "name"))
-	}
-	if _, ok := r.messageStateRegistry[name]; ok {
-		panic(NewErrMessageStateExists(name))
-	}
-
-	r.messageStateRegistry[name] = handler
-
-}
-
-func Router(router *RouteTable) Middleware {
+func RouterMiddleware(router Router) Middleware {
 
 	return func(context *BotContext, next HandlerFunc) {
 		logger := context.Logger()
@@ -153,5 +90,86 @@ func extractCallback(callbackData string) (action CallbackName, args []string) {
 	}
 
 	return
+
+}
+
+// Default Implementation for Route Table
+type RouteTable struct {
+	commandRegistry      map[CommandName]HandlerFunc
+	callbackRegistry     map[CallbackName]HandlerFunc
+	messageStateRegistry map[StateName]HandlerFunc
+}
+
+func NewRouteTable() Router {
+	return &RouteTable{
+		commandRegistry:      make(map[CommandName]HandlerFunc),
+		callbackRegistry:     make(map[CallbackName]HandlerFunc),
+		messageStateRegistry: make(map[StateName]HandlerFunc),
+	}
+}
+
+func (r *RouteTable) GetCommandHandler(name CommandName) (f HandlerFunc, ok bool) {
+
+	f, ok = r.commandRegistry[name]
+	return
+
+}
+
+func (r *RouteTable) GetCallbackHandler(name CallbackName) (f HandlerFunc, ok bool) {
+
+	f, ok = r.callbackRegistry[name]
+	return
+
+}
+
+func (r *RouteTable) GetMessageStateHandler(name StateName) (f HandlerFunc, ok bool) {
+
+	f, ok = r.messageStateRegistry[name]
+	return
+
+}
+
+func (r *RouteTable) AddCallbackHandler(name CallbackName, handler HandlerFunc) error {
+
+	if len(name) < 1 {
+		return fmt.Errorf(ErrEmptyArgument, "name")
+	}
+
+	if _, ok := r.callbackRegistry[name]; ok {
+		return NewErrCallbackExists(name)
+	}
+
+	r.callbackRegistry[name] = handler
+
+	return nil
+
+}
+
+func (r *RouteTable) AddCommandHandler(name CommandName, handler HandlerFunc) error {
+	if len(name) < 1 {
+		return fmt.Errorf(ErrEmptyArgument, "name")
+	}
+
+	if _, ok := r.commandRegistry[name]; ok {
+		return NewErrCommandExists(name)
+	}
+
+	r.commandRegistry[name] = handler
+
+	return nil
+
+}
+
+func (r *RouteTable) AddMessageHandler(name StateName, handler HandlerFunc) error {
+	if len(name) < 1 {
+		return fmt.Errorf(ErrEmptyArgument, "name")
+	}
+	if _, ok := r.messageStateRegistry[name]; ok {
+		return NewErrMessageStateExists(name)
+	}
+
+	r.messageStateRegistry[name] = handler
+
+	return nil
 
 }

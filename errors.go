@@ -1,6 +1,13 @@
 package tgbotapp
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrInvalidBotToken = errors.New("Invalid bot token.")
+)
 
 type ErrCommandExists struct {
 	commandName CommandName

@@ -1,9 +1,20 @@
 package tgbotapp
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"errors"
+	"fmt"
+	"sync"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 const (
-	StateDefault StateName = ""
+	StateDefault       StateName = ""
+	ErrSessionNotFound           = "Session not found for chat: %d"
+)
+
+var (
+	ErrEmptySessionManager = errors.New("Session Manager is nil.")
 )
 
 type Session struct {
@@ -17,6 +28,10 @@ type SessionManager interface {
 }
 
 func SessionMiddleware(manager SessionManager) Middleware {
+
+	if manager == nil {
+		panic(ErrEmptySessionManager)
+	}
 
 	return func(ctx *BotContext, next HandlerFunc) {
 
@@ -57,4 +72,48 @@ func tryGetChatID(update *tgbotapi.Update) (chatID int64, ok bool) {
 
 	return
 
+}
+
+// Default Implementation for Session In Memory Manager.
+
+type InMemoryManager struct {
+	registry map[int64]Session
+	mu       sync.RWMutex
+}
+
+func NewInMemoryManager() SessionManager {
+	return &InMemoryManager{
+		registry: make(map[int64]Session),
+	}
+}
+
+func (s *InMemoryManager) GetOrCreateSession(chatID int64) (*Session, error) {
+	s.mu.RLock()
+	sess, ok := s.registry[chatID]
+	s.mu.RUnlock()
+	if !ok {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		sess = Session{
+			ChatID: chatID,
+			State:  StateDefault,
+		}
+
+		s.registry[chatID] = sess
+	}
+
+	return &sess, nil
+
+}
+
+func (s *InMemoryManager) SetSession(chatID int64, session *Session) error {
+
+	_, ok := s.registry[chatID]
+	if !ok {
+		return fmt.Errorf(ErrSessionNotFound, chatID)
+	}
+
+	s.registry[chatID] = *session
+
+	return nil
 }

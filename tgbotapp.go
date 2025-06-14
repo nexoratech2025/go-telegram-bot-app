@@ -50,22 +50,22 @@ func Default(botAPI tgbotapi.BotAPI, opts ...OptionFunc) *Application {
 	return app
 }
 
-func (a *Application) RegisterCommand(name CommandName, description string, handler HandlerFunc) error {
+func (a *Application) RegisterCommand(name string, description string, handler HandlerFunc) error {
 
 	botCommands = append(botCommands, tgbotapi.BotCommand{
 		Command:     string(name),
 		Description: description,
 	})
 
-	return a.Router.AddCommandHandler(name, handler)
+	return a.Router.AddHandler(name, CommandHandler, handler)
 }
 
-func (a *Application) RegisterCallback(name CallbackName, handler HandlerFunc) error {
-	return a.Router.AddCallbackHandler(name, handler)
+func (a *Application) RegisterCallback(name string, handler HandlerFunc) error {
+	return a.Router.AddHandler(name, CallbackHandler, handler)
 }
 
-func (a *Application) RegisterMessage(state StateName, handler HandlerFunc) error {
-	return a.Router.AddMessageHandler(state, handler)
+func (a *Application) RegisterMessage(state string, handler HandlerFunc) error {
+	return a.Router.AddHandler(state, MessageHandler, handler)
 }
 
 func (a *Application) Use(middlewares ...Middleware) {
@@ -120,10 +120,10 @@ func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update)
 	botCtx := NewBotContext(ctx, a, update)
 
 	f := a.middlewares.Wrap(func(ctx *BotContext) {
-		if ctx.app.handler != nil {
-			ctx.app.handler(botCtx)
+		if a.handler != nil {
+			a.handler(ctx)
 		} else {
-			ctx.Logger().WarnContext(ctx.Ctx, "No Handler Found. Returning nothing.")
+			a.Logger.ErrorContext(ctx.Ctx, "Error: Default handler should be set in routing middleware.")
 		}
 	})
 

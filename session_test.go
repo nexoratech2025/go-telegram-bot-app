@@ -6,11 +6,6 @@ import (
 	tgbotapp "github.com/StridersTech2025/go-telegram-bot-app"
 )
 
-const (
-	expectsNotNil  = "Expects %s to not nil."
-	expectsNoError = "Expects no error. found %#v"
-)
-
 func TestGetOrCreateSessionShouldCreateNewSessionIfNotExists(t *testing.T) {
 
 	sessionManager := tgbotapp.NewInMemoryManager()
@@ -46,13 +41,12 @@ func TestSetSessionShouldUpdateSession(t *testing.T) {
 	// Act
 	err = mgr.SetSession(chatID, s)
 
+	// Assert
 	if err != nil {
-		t.Errorf(expectNoError, err)
+		t.Errorf(expectsNoError, err)
 	}
 
 	s, _ = mgr.GetOrCreateSession(chatID)
-
-	// Assert
 
 	if s == nil {
 		t.Errorf(expectsNotNil, "s")

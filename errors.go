@@ -9,44 +9,34 @@ var (
 	ErrInvalidBotToken = errors.New("Invalid bot token.")
 )
 
-type ErrCommandExists struct {
-	commandName CommandName
+type ErrHandlerAlreadyExists struct {
+	name   string
+	action HandlerAction
 }
 
-func NewErrCommandExists(commandName CommandName) error {
-	return &ErrCommandExists{
-		commandName: commandName,
+func (e *ErrHandlerAlreadyExists) Error() string {
+	return fmt.Sprintf("Handler function already exists for name %s of type %s", e.name, e.action)
+}
+
+func NewErrHandlerAlreadyExists(name string, action HandlerAction) error {
+	return &ErrHandlerAlreadyExists{
+		name:   name,
+		action: action,
 	}
 }
 
-func (e *ErrCommandExists) Error() string {
-	return fmt.Sprintf("Command handler already exists for name: %s", e.commandName)
+type ErrInvalidArgument struct {
+	reason  string
+	argName string
 }
 
-type ErrCallbackExists struct {
-	callbackName CallbackName
+func (e *ErrInvalidArgument) Error() string {
+	return fmt.Sprintf("Invalid Argument %q: %s", e.argName, e.reason)
 }
 
-func NewErrCallbackExists(callbackName CallbackName) error {
-	return &ErrCallbackExists{
-		callbackName: callbackName,
+func NewErrInvalidArgument(reason string, argName string) error {
+	return &ErrInvalidArgument{
+		reason,
+		argName,
 	}
-}
-
-func (e *ErrCallbackExists) Error() string {
-	return fmt.Sprintf("Callback handler already exists for name: %s", e.callbackName)
-}
-
-type ErrMessageStateExists struct {
-	messageState StateName
-}
-
-func NewErrMessageStateExists(messageState StateName) error {
-	return &ErrMessageStateExists{
-		messageState: messageState,
-	}
-}
-
-func (e *ErrMessageStateExists) Error() string {
-	return fmt.Sprintf("Message state handler already exists for state: %s", e.messageState)
 }

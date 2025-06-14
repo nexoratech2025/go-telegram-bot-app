@@ -1,10 +1,12 @@
 package tgbotapp
 
 import (
+	"errors"
 	"log/slog"
 
 	"context"
 
+	"github.com/StridersTech2025/go-telegram-bot-app/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -64,7 +66,7 @@ func Default(botAPI *tgbotapi.BotAPI, opts ...OptionFunc) *Application {
 func (a *Application) RegisterCommand(name string, description string, handler HandlerFunc) error {
 
 	botCommands = append(botCommands, tgbotapi.BotCommand{
-		Command:     string(name),
+		Command:     name,
 		Description: description,
 	})
 
@@ -99,9 +101,13 @@ func (a *Application) UseSession() {
 
 func (a *Application) Start(ctx context.Context) error {
 
+	a.Logger.InfoContext(ctx, "Starting application...")
+
 	err := a.initBotCommands()
 	if err != nil {
 		a.Logger.ErrorContext(ctx, "Cannot set commands list.", "error_detail", err)
+	} else {
+		a.Logger.InfoContext(ctx, "Command list set successfully.")
 	}
 
 	updateCfg := tgbotapi.NewUpdate(0)
@@ -110,13 +116,12 @@ func (a *Application) Start(ctx context.Context) error {
 	updates := a.BotAPI.GetUpdatesChan(updateCfg)
 
 	go func() {
+		a.Logger.Info("Listening for updates from bot.", "bot_id", a.BotAPI.Self.ID, "bot_username", a.BotAPI.Self.UserName)
 		for {
 			select {
 			case <-ctx.Done():
-				err := a.shutdown()
-				if err != nil {
-					a.Logger.ErrorContext(ctx, "Error shutting down the application", "error_detail", err)
-				}
+				a.shutdown()
+				return
 
 			case update := <-updates:
 				a.handleUpdate(ctx, &update)
@@ -128,9 +133,11 @@ func (a *Application) Start(ctx context.Context) error {
 
 }
 
-func (a *Application) shutdown() error {
+func (a *Application) shutdown() {
+	a.Logger.Info("Shutting Down the application...")
 	a.BotAPI.StopReceivingUpdates()
-	return nil
+	a.Logger.Info("Application stopped successfully.")
+
 }
 
 func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update) {
@@ -151,10 +158,26 @@ func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update)
 
 func (a *Application) initBotCommands() error {
 
+	if len(botCommands) < 1 {
+		a.Logger.Warn("No bot commands found.")
+		return nil
+	}
+
 	cmds := tgbotapi.NewSetMyCommands(botCommands...)
 
-	_, err := a.BotAPI.Send(cmds)
+	// tgbotapi Send method handles message response only.
+	// setMyCommands method return boolean.
+	// Thus custom setMyCommand function is used here.
 
-	return err
+	ok, err := util.SendSetMyCommands(*a.BotAPI, cmds)
+
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return errors.New("Cannot set command.")
+	}
+	return nil
 
 }

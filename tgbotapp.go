@@ -43,6 +43,7 @@ func (a *Application) With(opts ...OptionFunc) *Application {
 }
 
 func defaultOptions(a *Application) {
+	a.Logger = slog.Default()
 	a.Router = NewRouteTable()
 	a.SessionManager = NewInMemoryManager()
 }

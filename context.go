@@ -19,24 +19,30 @@ type BotContext struct {
 	app  *Application
 
 	Ctx     context.Context
-	Params  []string
-	Bot     *tgbotapi.BotAPI
+	BotAPI  *tgbotapi.BotAPI
 	Update  *tgbotapi.Update
 	Session *Session
+	Params  []string
 }
 
-func NewBotContext(ctx context.Context, bot *tgbotapi.BotAPI, update *tgbotapi.Update) *BotContext {
+func NewBotContext(ctx context.Context, app *Application, update *tgbotapi.Update) *BotContext {
 
 	ctxID := uuid.NewString()
 	ctx = context.WithValue(ctx, CtxKeyRequestID, ctxID)
 
-	return &BotContext{
-		Ctx:  ctx,
+	c := &BotContext{
 		data: make(map[string]any),
+		app:  app,
 
-		Bot:    bot,
+		Ctx:    ctx,
 		Update: update,
 	}
+
+	if app != nil {
+		c.BotAPI = app.BotAPI
+	}
+
+	return c
 }
 
 func (c *BotContext) SetData(key string, value any) {

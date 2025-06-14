@@ -20,6 +20,7 @@ var (
 type Session struct {
 	ChatID int64
 	State  StateName
+	Data   map[string]any
 }
 
 type SessionManager interface {
@@ -108,12 +109,15 @@ func (s *InMemoryManager) GetOrCreateSession(chatID int64) (*Session, error) {
 
 func (s *InMemoryManager) SetSession(chatID int64, session *Session) error {
 
-	_, ok := s.registry[chatID]
+	sess, ok := s.registry[chatID]
 	if !ok {
 		return fmt.Errorf(ErrSessionNotFound, chatID)
 	}
 
-	s.registry[chatID] = *session
+	sess.State = session.State
+	sess.Data = session.Data
+
+	s.registry[chatID] = sess
 
 	return nil
 }

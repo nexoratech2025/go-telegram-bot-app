@@ -1,4 +1,4 @@
-module github.com/StridersTech2025/go-telegram-bot-app/v1
+module github.com/StridersTech2025/go-telegram-bot-app
 
 go 1.24.3
 

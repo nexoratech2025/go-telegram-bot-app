@@ -117,7 +117,7 @@ func (a *Application) shutdown() error {
 
 func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update) {
 
-	botCtx := NewBotContext(ctx, a.BotAPI, update)
+	botCtx := NewBotContext(ctx, a, update)
 
 	f := a.middlewares.Wrap(func(ctx *BotContext) {
 		if ctx.app.handler != nil {

@@ -1,9 +1,10 @@
 package tgbotapp_test
 
 import (
+	"log/slog"
 	"testing"
 
-	tgbotapp "github.com/StridersTech2025/go-telegram-bot-app/v1"
+	tgbotapp "github.com/StridersTech2025/go-telegram-bot-app"
 
 	"github.com/google/uuid"
 )
@@ -73,7 +74,10 @@ func TestMiddlewareChainCorrectOrder(t *testing.T) {
 	t.Logf("Running Test %s", uuid.NewString())
 
 	chain := tgbotapp.NewMiddlewareChain()
-	ctx := tgbotapp.NewBotContext(t.Context(), nil, nil)
+	app := tgbotapp.Application{
+		Logger: slog.Default(),
+	}
+	ctx := tgbotapp.NewBotContext(t.Context(), &app, nil)
 
 	chain.Append(middlewareFunc1, middlewareFunc2)
 	m := chain.Wrap(handlerFunc)

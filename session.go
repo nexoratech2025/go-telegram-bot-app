@@ -32,27 +32,32 @@ type SessionManager interface {
 
 func SessionMiddleware(manager SessionManager) Middleware {
 
-	if manager == nil {
-		panic(ErrEmptySessionManager)
-	}
-
 	return func(ctx *BotContext, next HandlerFunc) {
 
-		chatID, ok := tryGetChatID(ctx.Update)
+		if manager == nil {
+			ctx.Logger().ErrorContext(ctx.Ctx, "No session manager available.")
+			next(ctx)
+		} else {
 
-		if ok {
-			session, err := manager.GetOrCreateSession(chatID)
-			if err != nil {
-				ctx.Logger().WarnContext(ctx.Ctx, "Faild to retrieve session", "error", err)
+			chatID, ok := tryGetChatID(ctx.Update)
+
+			if ok {
+				session, err := manager.GetOrCreateSession(chatID)
+				if err != nil {
+					ctx.Logger().WarnContext(ctx.Ctx, "Faild to retrieve session", "error", err)
+				}
+
+				ctx.Session = session
+
+			} else {
+				ctx.Logger().WarnContext(ctx.Ctx, "Cannot retrieve chatID from chat update", "updateId", ctx.Update.UpdateID)
 			}
 
-			ctx.Session = session
+			next(ctx)
 
-		} else {
-			ctx.Logger().WarnContext(ctx.Ctx, "Cannot retrieve chatID from chat update", "updateId", ctx.Update.UpdateID)
+			manager.SetSession(chatID, ctx.Session)
 		}
 
-		next(ctx)
 	}
 
 }

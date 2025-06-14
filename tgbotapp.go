@@ -25,9 +25,11 @@ type Application struct {
 	BotAPI         *tgbotapi.BotAPI
 }
 
-func New(botAPI tgbotapi.BotAPI, opts ...OptionFunc) *Application {
+// Return completely new application with no configuration.
+func New(botAPI *tgbotapi.BotAPI, opts ...OptionFunc) *Application {
 	app := &Application{
 		middlewares: NewMiddlewareChain(),
+		BotAPI:      botAPI,
 	}
 	return app.With(opts...)
 }
@@ -40,11 +42,19 @@ func (a *Application) With(opts ...OptionFunc) *Application {
 	return a
 }
 
-func Default(botAPI tgbotapi.BotAPI, opts ...OptionFunc) *Application {
+func defaultOptions(a *Application) {
+	a.Router = NewRouteTable()
+	a.SessionManager = NewInMemoryManager()
+}
 
-	app := New(botAPI, opts...)
-	app.SessionManager = NewInMemoryManager()
-	app.Router = NewRouteTable()
+// Return new application with default configured Middlewares (Session and Router)
+func Default(botAPI *tgbotapi.BotAPI, opts ...OptionFunc) *Application {
+
+	options := []OptionFunc{defaultOptions}
+
+	options = append(options, opts...)
+
+	app := New(botAPI, options...)
 	app.UseSession()
 	app.UseRouting()
 	return app
@@ -98,15 +108,22 @@ func (a *Application) Start(ctx context.Context) error {
 
 	updates := a.BotAPI.GetUpdatesChan(updateCfg)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return a.shutdown()
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				err := a.shutdown()
+				if err != nil {
+					a.Logger.ErrorContext(ctx, "Error shutting down the application", "error_detail", err)
+				}
 
-		case update := <-updates:
-			a.handleUpdate(ctx, &update)
+			case update := <-updates:
+				a.handleUpdate(ctx, &update)
+			}
 		}
-	}
+	}()
+
+	return nil
 
 }
 

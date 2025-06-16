@@ -69,6 +69,7 @@ func RouterWithDefault(router Router, defaultFunc HandlerFunc) Middleware {
 
 			if !ok {
 				logger.WarnContext(context.Ctx, "No handler found for callback.", "callbackName", callbackData)
+				break
 			}
 
 			f = h.Func
@@ -79,7 +80,9 @@ func RouterWithDefault(router Router, defaultFunc HandlerFunc) Middleware {
 
 			if !ok {
 				logger.WarnContext(context.Ctx, "No handler found for command.", "commandName", command)
+				break
 			}
+
 			f = h.Func
 			context.Params = strings.Split(context.Update.Message.CommandArguments(), CommandDelimiter)
 
@@ -88,6 +91,7 @@ func RouterWithDefault(router Router, defaultFunc HandlerFunc) Middleware {
 				h, ok := router.GetHandler(string(context.Session.State), MessageHandler)
 				if !ok {
 					logger.WarnContext(context.Ctx, "No handler found for message state.", "messageState", context.Session.State)
+					break
 				}
 
 				f = h.Func

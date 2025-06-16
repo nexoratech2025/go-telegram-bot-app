@@ -145,6 +145,8 @@ func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update)
 	botCtx := NewBotContext(ctx, a, update)
 
 	f := a.middlewares.Wrap(func(ctx *BotContext) {
+		a.Logger.InfoContext(ctx.Ctx, "Processing update.", "from", ctx.Update.SentFrom().ID)
+
 		if a.handler != nil {
 			a.handler(ctx)
 		} else {

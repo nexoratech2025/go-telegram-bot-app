@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/StridersTech2025/go-telegram-bot-app/session"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 )
@@ -21,7 +22,7 @@ type BotContext struct {
 	Ctx     context.Context
 	BotAPI  *tgbotapi.BotAPI
 	Update  *tgbotapi.Update
-	Session *Session
+	Session session.Sessioner
 	Params  []string
 }
 

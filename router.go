@@ -88,9 +88,9 @@ func RouterWithDefault(router Router, defaultFunc HandlerFunc) Middleware {
 
 		case context.Update.Message != nil:
 			if context.Session != nil {
-				h, ok := router.GetHandler(string(context.Session.State), MessageHandler)
+				h, ok := router.GetHandler(string(context.Session.CurrentState()), MessageHandler)
 				if !ok {
-					logger.WarnContext(context.Ctx, "No handler found for message state.", "messageState", context.Session.State)
+					logger.WarnContext(context.Ctx, "No handler found for message state.", "messageState", context.Session.CurrentState())
 					break
 				}
 

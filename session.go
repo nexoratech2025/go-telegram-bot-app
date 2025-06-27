@@ -4,13 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+
+	"github.com/StridersTech2025/go-telegram-bot-app/session"
 )
 
-type StateName string
-
-const (
-	StateDefault StateName = ""
-)
 const (
 	ErrSessionNotFound = "Session not found for chat: %d"
 )
@@ -19,18 +16,7 @@ var (
 	ErrEmptySessionManager = errors.New("Session Manager is nil.")
 )
 
-type Session struct {
-	ChatID int64
-	State  StateName
-	Data   map[string]any
-}
-
-type SessionManager interface {
-	GetOrCreateSession(chatID int64) (*Session, error)
-	SetSession(chatID int64, session *Session) error
-}
-
-func SessionMiddleware(manager SessionManager) Middleware {
+func SessionMiddleware(manager session.SessionManager[int64]) Middleware {
 
 	return func(ctx *BotContext, next HandlerFunc) {
 
@@ -42,66 +28,111 @@ func SessionMiddleware(manager SessionManager) Middleware {
 			chat := ctx.Update.FromChat()
 
 			if chat != nil {
-				chatID := chat.ID
-				session, err := manager.GetOrCreateSession(chatID)
+				chatID := chat.ChatConfig().ChatID
+				session, err := manager.GetOrCreate(chatID)
 				if err != nil {
-					ctx.Logger().WarnContext(ctx.Ctx, "Faild to retrieve session", "error", err)
+					ctx.Logger().WarnContext(ctx.Ctx, "Failed to retrieve session", "error", err)
 				}
 
 				ctx.Session = session
 				next(ctx)
-				manager.SetSession(chatID, ctx.Session)
+				manager.Set(chatID, ctx.Session)
 
 			} else {
 				ctx.Logger().WarnContext(ctx.Ctx, "Cannot retrieve chatID from chat update", "update_id", ctx.Update.UpdateID)
 				next(ctx)
 			}
 		}
+
 	}
+
+}
+
+type DefaultSession struct {
+	data  map[string]any
+	state string
+}
+
+func NewDefaultSession() session.Sessioner {
+	return &DefaultSession{
+		data: make(map[string]any),
+	}
+}
+
+func (s *DefaultSession) CurrentState() string {
+	return s.state
+}
+
+func (s *DefaultSession) SetState(state string) {
+	s.state = state
+}
+
+func (s *DefaultSession) Get(key string) (value any, ok bool) {
+	value, ok = s.data[key]
+	return
+}
+
+func (s *DefaultSession) Set(key string, value any) {
+	s.data[key] = value
+}
+
+func (s *DefaultSession) Delete(key string) {
+	delete(s.data, key)
+}
+
+func (s *DefaultSession) GetAllKeys() (keys []string) {
+
+	for k := range s.data {
+		keys = append(keys, k)
+	}
+
+	return
 }
 
 // Default Implementation for Session In Memory Manager.
-type InMemoryManager struct {
-	registry map[int64]Session
+type DefaultInMemoryManager struct {
+	registry map[int64]session.Sessioner
 	mu       sync.RWMutex
 }
 
-func NewInMemoryManager() SessionManager {
-	return &InMemoryManager{
-		registry: make(map[int64]Session),
+func NewDefaultInMemoryManager() session.SessionManager[int64] {
+	return &DefaultInMemoryManager{
+		registry: make(map[int64]session.Sessioner),
 	}
 }
 
-func (s *InMemoryManager) GetOrCreateSession(chatID int64) (*Session, error) {
+func (s *DefaultInMemoryManager) GetOrCreate(chatID int64) (session.Sessioner, error) {
 	s.mu.RLock()
 	sess, ok := s.registry[chatID]
 	s.mu.RUnlock()
 	if !ok {
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		sess = Session{
-			ChatID: chatID,
-			State:  StateDefault,
-		}
-
+		sess = NewDefaultSession()
 		s.registry[chatID] = sess
 	}
 
-	return &sess, nil
+	return sess, nil
 
 }
 
-func (s *InMemoryManager) SetSession(chatID int64, session *Session) error {
+func (s *DefaultInMemoryManager) Set(chatID int64, session session.Sessioner) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	sess, ok := s.registry[chatID]
 	if !ok {
 		return fmt.Errorf(ErrSessionNotFound, chatID)
 	}
 
-	sess.State = session.State
-	sess.Data = session.Data
-
 	s.registry[chatID] = sess
 
+	return nil
+}
+
+func (s *DefaultInMemoryManager) Delete(chatID int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.registry, chatID)
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"context"
 
+	"github.com/StridersTech2025/go-telegram-bot-app/session"
 	"github.com/StridersTech2025/go-telegram-bot-app/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -21,7 +22,7 @@ type Application struct {
 	middlewares *MiddlewareChain
 	handler     HandlerFunc
 
-	SessionManager SessionManager
+	SessionManager session.SessionManager[int64]
 	Logger         *slog.Logger
 	Router         Router
 	BotAPI         *tgbotapi.BotAPI
@@ -47,7 +48,7 @@ func (a *Application) With(opts ...OptionFunc) *Application {
 func defaultOptions(a *Application) {
 	a.Logger = slog.Default()
 	a.Router = NewRouteTable()
-	a.SessionManager = NewInMemoryManager()
+	a.SessionManager = NewDefaultInMemoryManager()
 }
 
 // Return new application with default configured Middlewares (Session and Router)

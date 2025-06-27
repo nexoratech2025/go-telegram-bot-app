@@ -8,11 +8,11 @@ import (
 
 func TestGetOrCreateSessionShouldCreateNewSessionIfNotExists(t *testing.T) {
 
-	sessionManager := tgbotapp.NewInMemoryManager()
+	sessionManager := tgbotapp.NewDefaultInMemoryManager()
 
 	var chatID int64 = 123
 
-	s, err := sessionManager.GetOrCreateSession(chatID)
+	s, err := sessionManager.GetOrCreate(chatID)
 
 	if err != nil {
 		t.Errorf(expectsNoError, err)
@@ -20,40 +20,79 @@ func TestGetOrCreateSessionShouldCreateNewSessionIfNotExists(t *testing.T) {
 
 	if s == nil {
 		t.Errorf(expectsNotNil, "s")
-	}
-
-	if s.ChatID != chatID {
-		t.Errorf("Expect chatID to be %d. Found chatID %d", chatID, s.ChatID)
 	}
 
 }
 
 func TestSetSessionShouldUpdateSession(t *testing.T) {
 	// Arrange
-	mgr := tgbotapp.NewInMemoryManager()
-	var chatID int64 = 123
-	var testState tgbotapp.StateName = "TEST_STATE"
+	mgr := tgbotapp.NewDefaultInMemoryManager()
+	const chatID int64 = 123
+	testData := 420
+	testKey := "test"
 	var err error
-	s, _ := mgr.GetOrCreateSession(chatID)
+	s, _ := mgr.GetOrCreate(chatID)
 
-	s.State = testState
+	s.Set(testKey, testData)
 
 	// Act
-	err = mgr.SetSession(chatID, s)
+	err = mgr.Set(chatID, s)
 
 	// Assert
 	if err != nil {
 		t.Errorf(expectsNoError, err)
 	}
 
-	s, _ = mgr.GetOrCreateSession(chatID)
+	s, _ = mgr.GetOrCreate(chatID)
 
 	if s == nil {
 		t.Errorf(expectsNotNil, "s")
 	}
 
-	if s.State != testState {
-		t.Errorf("Expected %s, found %s", testState, s.State)
+	state, ok := s.Get(testKey)
+	if !ok {
+		t.Errorf("Expected session to contain %q key", "state")
+	}
+
+	switch d := state.(type) {
+	case int:
+		if d != testData {
+			t.Errorf("Expected %d. Received: %d", testData, d)
+		}
+	default:
+		t.Errorf("Cannot convert session data back to int")
+	}
+
+}
+
+func TestSetStateShouldUpdateSessionState(t *testing.T) {
+	// Arrange
+	mgr := tgbotapp.NewDefaultInMemoryManager()
+	const chatID int64 = 123
+	var testState = "TEST_STATE"
+	var err error
+	s, _ := mgr.GetOrCreate(chatID)
+
+	s.SetState(testState)
+
+	// Act
+	err = mgr.Set(chatID, s)
+
+	// Assert
+	if err != nil {
+		t.Errorf(expectsNoError, err)
+	}
+
+	s, _ = mgr.GetOrCreate(chatID)
+
+	if s == nil {
+		t.Errorf(expectsNotNil, "s")
+	}
+
+	state := s.CurrentState()
+
+	if state != testState {
+		t.Errorf("Expected state to be %q, found state %q", testState, state)
 	}
 
 }

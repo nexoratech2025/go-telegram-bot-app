@@ -89,7 +89,8 @@ func (s *DefaultSession) GetAllKeys() (keys []string) {
 	return
 }
 
-func clearSessionData(session interface {
+// ClearSessionData clears all session data by deleting all keys
+func ClearSessionData(session interface {
 	GetAllKeys() []string
 	Delete(string)
 }) {
@@ -147,9 +148,14 @@ func (s *DefaultInMemoryManager) Delete(chatID int64) error {
 }
 
 func (s *DefaultSession) ClearData() {
-	clearSessionData(s)
+	ClearSessionData(s)
 }
 
 func (s *DefaultSession) ClearState() {
 	s.state = ""
+}
+
+func (s *DefaultSession) ClearAll() {
+	s.ClearData()
+	s.ClearState()
 }

@@ -89,6 +89,15 @@ func (s *DefaultSession) GetAllKeys() (keys []string) {
 	return
 }
 
+func clearSessionData(session interface {
+	GetAllKeys() []string
+	Delete(string)
+}) {
+	for _, key := range session.GetAllKeys() {
+		session.Delete(key)
+	}
+}
+
 // Default Implementation for Session In Memory Manager.
 type DefaultInMemoryManager struct {
 	registry map[int64]session.Sessioner
@@ -135,4 +144,12 @@ func (s *DefaultInMemoryManager) Delete(chatID int64) error {
 	defer s.mu.Unlock()
 	delete(s.registry, chatID)
 	return nil
+}
+
+func (s *DefaultSession) ClearData() {
+	clearSessionData(s)
+}
+
+func (s *DefaultSession) ClearState() {
+	s.state = ""
 }

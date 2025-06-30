@@ -7,6 +7,7 @@ type Sessioner interface {
 	GetAllKeys() (keys []string)
 	CurrentState() string
 	SetState(state string)
+	ClearData()
 }
 
 type SessionManager[K comparable] interface {

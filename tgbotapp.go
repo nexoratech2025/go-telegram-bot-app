@@ -3,6 +3,7 @@ package tgbotapp
 import (
 	"errors"
 	"log/slog"
+	"sync"
 
 	"context"
 
@@ -21,6 +22,7 @@ type OptionFunc func(*Application)
 type Application struct {
 	middlewares *MiddlewareChain
 	handler     HandlerFunc
+	wg          sync.WaitGroup
 
 	SessionManager session.SessionManager[int64]
 	Logger         *slog.Logger
@@ -116,7 +118,10 @@ func (a *Application) Start(ctx context.Context) error {
 
 	updates := a.BotAPI.GetUpdatesChan(updateCfg)
 
+	// Poll loop
+	a.wg.Add(1)
 	go func() {
+		defer a.wg.Done()
 		a.Logger.Info("Listening for updates from bot.", "bot_id", a.BotAPI.Self.ID, "bot_username", a.BotAPI.Self.UserName)
 		for {
 			select {
@@ -130,6 +135,9 @@ func (a *Application) Start(ctx context.Context) error {
 		}
 	}()
 
+	<-ctx.Done()
+
+	a.wg.Wait()
 	return nil
 
 }

@@ -84,6 +84,14 @@ func (a *Application) RegisterMessage(state string, handler HandlerFunc) error {
 	return a.Router.AddHandler(state, MessageHandler, handler)
 }
 
+func (a *Application) RegisterDocument(handler HandlerFunc) error {
+	return a.Router.AddHandler("document", DocumentHandler, handler)
+}
+
+func (a *Application) RegisterDocumentByType(docType string, handler HandlerFunc) error {
+	return a.Router.AddHandler(docType, DocumentHandler, handler)
+}
+
 func (a *Application) Use(middlewares ...Middleware) {
 	a.middlewares.Append(middlewares...)
 }

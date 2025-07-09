@@ -2,6 +2,8 @@ package tgbotapp
 
 import (
 	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Handler Action Enum
@@ -11,6 +13,7 @@ const (
 	CommandHandler HandlerAction = iota
 	CallbackHandler
 	MessageHandler
+	DocumentHandler
 )
 
 func (h HandlerAction) String() string {
@@ -21,6 +24,8 @@ func (h HandlerAction) String() string {
 		return "Callback Handler"
 	case MessageHandler:
 		return "Message State Handler"
+	case DocumentHandler:
+		return "Document Handler"
 	default:
 		return "Unknown Handler"
 	}
@@ -87,6 +92,15 @@ func RouterWithDefault(router Router, defaultFunc HandlerFunc) Middleware {
 			context.Params = strings.Split(context.Update.Message.CommandArguments(), CommandDelimiter)
 
 		case context.Update.Message != nil:
+			if hasDocument(context.Update.Message) {
+				docType := getDocumentType(context.Update.Message)
+				h, ok := router.GetHandler(docType, DocumentHandler)
+				if ok {
+					f = h.Func
+					break
+				}
+			}
+
 			if context.Session != nil {
 				h, ok := router.GetHandler(string(context.Session.CurrentState()), MessageHandler)
 				if !ok {
@@ -167,4 +181,39 @@ func NewRouteTable() Router {
 	return &RouteTable{
 		handlers: make(map[HandlerAction]map[string]HandlerInfo),
 	}
+}
+
+func hasDocument(message *tgbotapi.Message) bool {
+	return message.Document != nil ||
+		message.Photo != nil ||
+		message.Video != nil ||
+		message.Audio != nil ||
+		message.Voice != nil ||
+		message.VideoNote != nil ||
+		message.Sticker != nil
+}
+
+func getDocumentType(message *tgbotapi.Message) string {
+	if message.Document != nil {
+		return "document"
+	}
+	if message.Photo != nil {
+		return "photo"
+	}
+	if message.Video != nil {
+		return "video"
+	}
+	if message.Audio != nil {
+		return "audio"
+	}
+	if message.Voice != nil {
+		return "voice"
+	}
+	if message.VideoNote != nil {
+		return "video_note"
+	}
+	if message.Sticker != nil {
+		return "sticker"
+	}
+	return "document"
 }

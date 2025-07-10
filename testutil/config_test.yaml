@@ -1,5 +1,12 @@
-languageCode: mm
-bot: 
-  name: "အမေးအဖြေ"
-  description: "အမေးအဖြေ bot"
-  shortDescription: "အတိုကောက်"
+botConfigs:
+  - languageCode: mm
+    bot:
+      name: "အမေးအဖြေ"
+      description: "အမေးအဖြေ bot"
+      shortDescription: "အတိုကောက်"
+
+  - languageCode: en
+    bot:
+      name: Quiz bot
+      description: Quiz bot in yaml
+      shortDescription: Quiz bot short description yaml

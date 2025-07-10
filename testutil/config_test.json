@@ -1,8 +1,20 @@
 {
-    "languageCode": "en",
-    "bot": {
-        "name": "Quiz Bot 1",
-        "shortDescription": "Quiz bot short description",
-        "description": "Quiz bot long description"
-    }
+    "botConfigs": [
+        {
+            "languageCode": "en",
+            "bot": {
+                "name": "Quiz Bot 1",
+                "shortDescription": "Quiz bot short description",
+                "description": "Quiz bot long description"
+            }
+        },
+        {
+            "languageCode": "mm",
+            "bot": {
+                "name": "အမေးအဖြေ",
+                "description": "အမေးအဖြေ bot",
+                "shortDescription": "အမေးအဖြေ ဘော့ အတိုကောက်"
+            }
+        }
+    ]
 }

@@ -29,16 +29,28 @@ func TestConfigFromYamlShouldReadAndCreateAppConfig(t *testing.T) {
 	}
 
 	expected := tgbotapp.AppConfig{
-		LanguageCode: "mm",
-		Bot: tgbotapp.BotConfig{
-			Name:             "အမေးအဖြေ",
-			ShortDescription: "အတိုကောက်",
-			Description:      "အမေးအဖြေ bot",
+		BotConfigs: []tgbotapp.BotConfig{
+			tgbotapp.BotConfig{
+				LanguageCode: "mm",
+				Bot: tgbotapp.BotInfo{
+					Name:             "အမေးအဖြေ",
+					Description:      "အမေးအဖြေ bot",
+					ShortDescription: "အတိုကောက်",
+				},
+			},
+			tgbotapp.BotConfig{
+				LanguageCode: "en",
+				Bot: tgbotapp.BotInfo{
+					Name:             "Quiz bot",
+					Description:      "Quiz bot in yaml",
+					ShortDescription: "Quiz bot short description yaml",
+				},
+			},
 		},
 	}
 
 	if !reflect.DeepEqual(*c, expected) {
-		t.Errorf("Expected AppConfig to be equal. Expected: %#v, Found: %#v", expected, *c)
+		t.Errorf("Expected AppConfig to be equal.\nExpected: %#v.\nFound: %#v", expected, *c)
 	}
 
 }
@@ -55,20 +67,32 @@ func TestConfigFromJsonShouldReadAndCreateAppConfig(t *testing.T) {
 	// Assert
 
 	if err != nil {
-		t.Errorf("Should not return error. Found: %s", err.Error())
+		t.Errorf("Should not return error.\nFound: %s", err.Error())
 	}
 
 	expected := tgbotapp.AppConfig{
-		LanguageCode: "en",
-		Bot: tgbotapp.BotConfig{
-			Name:             "Quiz Bot 1",
-			ShortDescription: "Quiz bot short description",
-			Description:      "Quiz bot long description",
+		BotConfigs: []tgbotapp.BotConfig{
+			tgbotapp.BotConfig{
+				LanguageCode: "en",
+				Bot: tgbotapp.BotInfo{
+					Name:             "Quiz Bot 1",
+					Description:      "Quiz bot long description",
+					ShortDescription: "Quiz bot short description",
+				},
+			},
+			tgbotapp.BotConfig{
+				LanguageCode: "mm",
+				Bot: tgbotapp.BotInfo{
+					Name:             "အမေးအဖြေ",
+					Description:      "အမေးအဖြေ bot",
+					ShortDescription: "အမေးအဖြေ ဘော့ အတိုကောက်",
+				},
+			},
 		},
 	}
 
 	if !reflect.DeepEqual(*c, expected) {
-		t.Errorf("Expected AppConfig to be equal. Expected: %#v, Found: %#v", expected, *c)
+		t.Errorf("Expected AppConfig to be equal.\nExpected: %#v.\nFound: %#v", expected, *c)
 	}
 
 }

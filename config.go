@@ -8,15 +8,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type BotConfig struct {
+const (
+	DefaultConfigFilePathJson = "appconfig.json"
+	DefaultConfigFilePathYaml = "appconfig.yaml"
+)
+
+type BotInfo struct {
 	Name             string `yaml:"name" json:"name"`
 	Description      string `yaml:"description" json:"description"`
 	ShortDescription string `yaml:"shortDescription" json:"shortDescription"`
 }
 
+type BotConfig struct {
+	LanguageCode string  `yaml:"languageCode" json:"languageCode"`
+	Bot          BotInfo `yaml:"bot" json:"bot"`
+}
+
 type AppConfig struct {
-	LanguageCode string    `yaml:"languageCode" json:"languageCode"`
-	Bot          BotConfig `yaml:"bot" json:"bot"`
+	BotConfigs []BotConfig `yaml:"botConfigs" json:"botConfigs"`
 }
 
 func NewAppConfig() *AppConfig {

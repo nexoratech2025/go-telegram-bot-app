@@ -2,13 +2,16 @@ package tgbotapp
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"context"
 
+	"github.com/StridersTech2025/go-telegram-bot-app/botwrapper"
+	"github.com/StridersTech2025/go-telegram-bot-app/helper"
 	"github.com/StridersTech2025/go-telegram-bot-app/session"
-	"github.com/StridersTech2025/go-telegram-bot-app/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -18,11 +21,15 @@ var (
 
 // Control the application option.
 type OptionFunc func(*Application)
+type LifeCycleHook func(*Application) error
 
 type Application struct {
 	middlewares *MiddlewareChain
 	handler     HandlerFunc
 	wg          sync.WaitGroup
+
+	before []LifeCycleHook
+	after  []LifeCycleHook
 
 	SessionManager session.SessionManager[int64]
 	Logger         *slog.Logger
@@ -114,11 +121,19 @@ func (a *Application) Start(ctx context.Context) error {
 
 	a.Logger.InfoContext(ctx, "Starting application...")
 
-	err := a.initBotCommands()
+	err := a.botSetup()
 	if err != nil {
 		a.Logger.ErrorContext(ctx, "Cannot set commands list.", "error_detail", err)
 	} else {
 		a.Logger.InfoContext(ctx, "Command list set successfully.")
+	}
+
+	for _, f := range a.before {
+		err = f(a)
+		if err != nil {
+			a.Logger.ErrorContext(ctx, "Initialisation failed.", "error_detail", err)
+			return err
+		}
 	}
 
 	updateCfg := tgbotapi.NewUpdate(0)
@@ -153,8 +168,19 @@ func (a *Application) Start(ctx context.Context) error {
 func (a *Application) shutdown() {
 	a.Logger.Info("Shutting Down the application...")
 	a.BotAPI.StopReceivingUpdates()
+	for _, f := range a.after {
+		f(a)
+	}
 	a.Logger.Info("Application stopped successfully.")
 
+}
+
+func (a *Application) BeforeStart(initFuncs ...LifeCycleHook) {
+	a.before = append(a.before, initFuncs...)
+}
+
+func (a *Application) BeforeShutdown(cleanupFuncs ...LifeCycleHook) {
+	a.after = append(a.after, cleanupFuncs...)
 }
 
 func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update) {
@@ -175,12 +201,15 @@ func (a *Application) handleUpdate(ctx context.Context, update *tgbotapi.Update)
 
 }
 
-func (a *Application) initBotCommands() error {
+func (a *Application) botSetup() error {
 
+	// Command initialisation
 	if len(botCommands) < 1 {
 		a.Logger.Warn("No bot commands found.")
 		return nil
 	}
+
+	bot := botwrapper.NewBotAPIWrapper(a.BotAPI)
 
 	cmds := tgbotapi.NewSetMyCommands(botCommands...)
 
@@ -188,7 +217,7 @@ func (a *Application) initBotCommands() error {
 	// setMyCommands method return boolean.
 	// Thus custom setMyCommand function is used here.
 
-	ok, err := util.SendSetMyCommands(*a.BotAPI, cmds)
+	ok, err := bot.SendSetMyCommands(cmds)
 
 	if err != nil {
 		return err
@@ -197,6 +226,66 @@ func (a *Application) initBotCommands() error {
 	if !ok {
 		return errors.New("Cannot set command.")
 	}
+
+	// Config initialisation
+	// check if yaml or json exists
+
+	config := NewAppConfig()
+
+	if helper.IsPathExists(DefaultConfigFilePathJson) {
+		config.FromJson(DefaultConfigFilePathJson)
+	} else if helper.IsPathExists(DefaultConfigFilePathYaml) {
+		config.FromYaml(DefaultConfigFilePathYaml)
+	} else {
+		return nil
+	}
+
+	for _, c := range config.BotConfigs {
+		langCode := strings.TrimSpace(c.LanguageCode)
+		if len(langCode) > 0 {
+			name := strings.TrimSpace(c.Bot.Name)
+			desc := strings.TrimSpace(c.Bot.Description)
+			sdesc := strings.TrimSpace(c.Bot.ShortDescription)
+
+			if len(name) > 0 {
+				cfg := botwrapper.NewSetMyName(name, langCode)
+				ok, err = bot.SetConfig(cfg)
+				if err != nil {
+					return err
+				}
+				if !ok {
+					return fmt.Errorf("Cannot set name for language code: %s", langCode)
+				}
+			}
+
+			if len(desc) > 0 {
+				cfg := botwrapper.NewSetMyDescription(desc, langCode)
+				ok, err = bot.SetConfig(cfg)
+				if err != nil {
+					return err
+				}
+				if !ok {
+					return fmt.Errorf("Cannot set description for language code: %s", langCode)
+				}
+
+			}
+
+			if len(sdesc) > 0 {
+				cfg := botwrapper.NewSetMyShortDescription(sdesc, langCode)
+				ok, err = bot.SetConfig(cfg)
+				if err != nil {
+					return err
+				}
+				if !ok {
+					return fmt.Errorf("Cannot set short description for language code: %s", langCode)
+				}
+
+			}
+
+		}
+
+	}
+
 	return nil
 
 }

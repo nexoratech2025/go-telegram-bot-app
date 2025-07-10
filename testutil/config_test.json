@@ -1,0 +1,8 @@
+{
+    "languageCode": "en",
+    "bot": {
+        "name": "Quiz Bot 1",
+        "shortDescription": "Quiz bot short description",
+        "description": "Quiz bot long description"
+    }
+}

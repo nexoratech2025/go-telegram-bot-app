@@ -30,6 +30,13 @@ func NewHandlerContext(ctx *BotContext, handlerName string) *HandlerContext {
 	}
 }
 
+// Parse mode constants for Telegram messages
+const (
+	ParseModeHTML       = "HTML"
+	ParseModeMarkdown   = "Markdown"
+	ParseModeMarkdownV2 = "MarkdownV2"
+)
+
 func (h *HandlerContext) GetParams() HandlerParams {
 	return HandlerParams{
 		ChatID:         h.Update.FromChat().ChatConfig().ChatID,
@@ -38,8 +45,29 @@ func (h *HandlerContext) GetParams() HandlerParams {
 	}
 }
 
-func (h *HandlerContext) SendMessage(text string) {
+func (h *HandlerContext) SendMessage(text string, parseMode ...string) {
 	msg := tgbotapi.NewMessage(h.Update.FromChat().ChatConfig().ChatID, text)
+
+	if len(parseMode) > 0 && parseMode[0] != "" {
+		mode := parseMode[0]
+		validModes := []string{ParseModeHTML, ParseModeMarkdown, ParseModeMarkdownV2}
+		isValid := false
+		for _, validMode := range validModes {
+			if mode == validMode {
+				isValid = true
+				break
+			}
+		}
+
+		if !isValid {
+			h.Logger.ErrorContext(h.Ctx, "Invalid parse mode", "parseMode", mode)
+			h.SendError("Invalid parse mode provided")
+			return
+		}
+
+		msg.ParseMode = mode
+	}
+
 	h.BotAPI.Send(msg)
 }
 

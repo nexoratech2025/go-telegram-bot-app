@@ -1,6 +1,7 @@
 package tgbotapp
 
 import (
+	"errors"
 	"log/slog"
 
 	"github.com/StridersTech2025/go-telegram-bot-app/session"
@@ -45,7 +46,7 @@ func (h *HandlerContext) GetParams() HandlerParams {
 	}
 }
 
-func (h *HandlerContext) SendMessage(text string, parseMode ...string) {
+func (h *HandlerContext) SendMessage(text string, parseMode ...string) error {
 	msg := tgbotapi.NewMessage(h.Update.FromChat().ChatConfig().ChatID, text)
 
 	if len(parseMode) > 0 && parseMode[0] != "" {
@@ -62,25 +63,43 @@ func (h *HandlerContext) SendMessage(text string, parseMode ...string) {
 		if !isValid {
 			h.Logger.ErrorContext(h.Ctx, "Invalid parse mode", "parseMode", mode)
 			h.SendError("Invalid parse mode provided")
-			return
+			return errors.New("invalid parse mode provided")
 		}
 
 		msg.ParseMode = mode
 	}
 
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendMessageWithKeyboard(text string, keyboard tgbotapi.ReplyKeyboardMarkup) {
+func (h *HandlerContext) SendMessageWithKeyboard(text string, keyboard tgbotapi.ReplyKeyboardMarkup) error {
 	msg := tgbotapi.NewMessage(h.Update.FromChat().ChatConfig().ChatID, text)
 	msg.ReplyMarkup = keyboard
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendMessageWithInlineKeyboard(text string, keyboard tgbotapi.InlineKeyboardMarkup) {
+func (h *HandlerContext) SendMessageWithInlineKeyboard(text string, keyboard tgbotapi.InlineKeyboardMarkup) error {
 	msg := tgbotapi.NewMessage(h.Update.FromChat().ChatConfig().ChatID, text)
 	msg.ReplyMarkup = keyboard
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
 func (h *HandlerContext) SendError(message string) {
@@ -210,81 +229,159 @@ func (h *HandlerContext) AnswerCallbackQueryWithAlert(text string) {
 	}
 }
 
-func (h *HandlerContext) SendPhoto(photo tgbotapi.FileBytes, caption string) {
+func (h *HandlerContext) SendPhoto(photo tgbotapi.FileBytes, caption string) error {
 	msg := tgbotapi.NewPhoto(h.Update.FromChat().ChatConfig().ChatID, photo)
 	if caption != "" {
 		msg.Caption = caption
 	}
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendDocument(document tgbotapi.FileBytes, caption string) {
+func (h *HandlerContext) SendDocument(document tgbotapi.FileBytes, caption string) error {
 	msg := tgbotapi.NewDocument(h.Update.FromChat().ChatConfig().ChatID, document)
 	if caption != "" {
 		msg.Caption = caption
 	}
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendVideo(video tgbotapi.FileBytes, caption string) {
+func (h *HandlerContext) SendVideo(video tgbotapi.FileBytes, caption string) error {
 	msg := tgbotapi.NewVideo(h.Update.FromChat().ChatConfig().ChatID, video)
 	if caption != "" {
 		msg.Caption = caption
 	}
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendAudio(audio tgbotapi.FileBytes, caption string) {
+func (h *HandlerContext) SendAudio(audio tgbotapi.FileBytes, caption string) error {
 	msg := tgbotapi.NewAudio(h.Update.FromChat().ChatConfig().ChatID, audio)
 	if caption != "" {
 		msg.Caption = caption
 	}
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendVoice(voice tgbotapi.FileBytes) {
+func (h *HandlerContext) SendVoice(voice tgbotapi.FileBytes) error {
 	msg := tgbotapi.NewVoice(h.Update.FromChat().ChatConfig().ChatID, voice)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendSticker(sticker tgbotapi.FileBytes) {
+func (h *HandlerContext) SendSticker(sticker tgbotapi.FileBytes) error {
 	msg := tgbotapi.NewSticker(h.Update.FromChat().ChatConfig().ChatID, sticker)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendLocation(latitude, longitude float64) {
+func (h *HandlerContext) SendLocation(latitude, longitude float64) error {
 	msg := tgbotapi.NewLocation(h.Update.FromChat().ChatConfig().ChatID, latitude, longitude)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendVenue(latitude, longitude float64, title, address string) {
+func (h *HandlerContext) SendVenue(latitude, longitude float64, title, address string) error {
 	msg := tgbotapi.NewVenue(h.Update.FromChat().ChatConfig().ChatID, title, address, latitude, longitude)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendContact(phoneNumber, firstName string) {
+func (h *HandlerContext) SendContact(phoneNumber, firstName string) error {
 	msg := tgbotapi.NewContact(h.Update.FromChat().ChatConfig().ChatID, phoneNumber, firstName)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) SendPoll(question string, options []string) {
+func (h *HandlerContext) SendPoll(question string, options []string) error {
 	msg := tgbotapi.NewPoll(h.Update.FromChat().ChatConfig().ChatID, question, options...)
-	h.BotAPI.Send(msg)
+	_, err := h.BotAPI.Send(msg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) DeleteMessage(messageID int) {
+func (h *HandlerContext) DeleteMessage(messageID int) error {
 	deleteMsg := tgbotapi.NewDeleteMessage(h.Update.FromChat().ChatConfig().ChatID, messageID)
-	h.BotAPI.Send(deleteMsg)
+	_, err := h.BotAPI.Send(deleteMsg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) EditMessageText(text string, messageID int) {
+func (h *HandlerContext) EditMessageText(text string, messageID int) error {
 	editMsg := tgbotapi.NewEditMessageText(h.Update.FromChat().ChatConfig().ChatID, messageID, text)
-	h.BotAPI.Send(editMsg)
+	_, err := h.BotAPI.Send(editMsg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
-func (h *HandlerContext) EditMessageReplyMarkup(replyMarkup tgbotapi.InlineKeyboardMarkup, messageID int) {
+func (h *HandlerContext) EditMessageReplyMarkup(replyMarkup tgbotapi.InlineKeyboardMarkup, messageID int) error {
 	editMsg := tgbotapi.NewEditMessageReplyMarkup(h.Update.FromChat().ChatConfig().ChatID, messageID, replyMarkup)
-	h.BotAPI.Send(editMsg)
+	_, err := h.BotAPI.Send(editMsg)
+	if err != nil {
+		h.HandleSendMessageError(err)
+		return err
+	}
+
+	return nil
 }
 
 func (h *HandlerContext) GetChatID() int64 {
@@ -397,4 +494,9 @@ func (h *HandlerContext) HasChatMember() bool {
 
 func (h *HandlerContext) HasChatJoinRequest() bool {
 	return h.Update.ChatJoinRequest != nil
+}
+
+func (h *HandlerContext) HandleSendMessageError(err error) {
+	h.Logger.ErrorContext(h.Ctx, "Failed to send message", "error", err)
+	h.SendError("Failed to send message. Please try again later.")
 }

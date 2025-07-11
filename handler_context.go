@@ -78,7 +78,7 @@ func (h *HandlerContext) SendMessage(text string, parseMode ...string) error {
 	return nil
 }
 
-func (h *HandlerContext) SendMessageWithKeyboard(text string, keyboard tgbotapi.ReplyKeyboardMarkup) error {
+func (h *HandlerContext) SendMessageWithKeyboard(text string, keyboard interface{}) error {
 	msg := tgbotapi.NewMessage(h.Update.FromChat().ChatConfig().ChatID, text)
 	msg.ReplyMarkup = keyboard
 	_, err := h.BotAPI.Send(msg)

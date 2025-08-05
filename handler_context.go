@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/StridersTech2025/go-telegram-bot-app/session"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/nexoratech2025/go-telegram-bot-app/session"
 )
 
 type HandlerContext struct {

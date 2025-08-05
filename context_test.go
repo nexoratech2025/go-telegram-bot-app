@@ -3,7 +3,7 @@ package tgbotapp_test
 import (
 	"testing"
 
-	tgbotapp "github.com/StridersTech2025/go-telegram-bot-app"
+	tgbotapp "github.com/nexoratech2025/go-telegram-bot-app"
 )
 
 const (

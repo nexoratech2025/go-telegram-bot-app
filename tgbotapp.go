@@ -7,9 +7,9 @@ import (
 
 	"context"
 
-	"github.com/StridersTech2025/go-telegram-bot-app/session"
-	"github.com/StridersTech2025/go-telegram-bot-app/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/nexoratech2025/go-telegram-bot-app/session"
+	"github.com/nexoratech2025/go-telegram-bot-app/util"
 )
 
 var (

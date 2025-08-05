@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"testing"
 
-	tgbotapp "github.com/StridersTech2025/go-telegram-bot-app"
+	tgbotapp "github.com/nexoratech2025/go-telegram-bot-app"
 
 	"github.com/google/uuid"
 )

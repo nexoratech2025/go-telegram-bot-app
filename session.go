@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/StridersTech2025/go-telegram-bot-app/session"
+	"github.com/nexoratech2025/go-telegram-bot-app/session"
 )
 
 const (
